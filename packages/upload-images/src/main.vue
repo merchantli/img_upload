@@ -1,25 +1,20 @@
 <template>
   <section class="img-wrap" ref="img_wrap">
     <div
-        v-for="(item, index) in images" :key="index" class="img-div"
-        :style="{
-        width: `${size}px`, height: `${size}px`, margin: `${gutter}px`
-      }"
+        v-for="(item, index) in images" :key="item.id" class="img-div"
+        :style="{ width: `${size}px`, height: `${size}px`, margin: `${gutter}px` }"
     >
             <figure>
-              <img :src="item.url" :alt="item.name">
+              <img :src="item.mUrl" :alt="item.id">
               <div class="mask">
-                <span class="el-icon-delete" @click="remove_img(index)"></span>
+                <span class="el-icon-delete" @click="images.splice(index, 1)"></span>
                 <span class="el-icon-view" @click="img_view(index)"></span>
               </div>
             </figure>
     </div>
 
     <div class="upload-container"
-         :style="{
-              width: `${size}px`, height: `${size}px`, margin: `${gutter}px`,
-              userSelect: 'none'
-          }"
+         :style="{ width: `${size}px`, height: `${size}px`, margin: `${gutter}px`, userSelect: 'none' }"
     >
       <label for="multiple-img">+</label>
       <input type="file" multiple="multiple" id="multiple-img" ref="file_input"
@@ -34,9 +29,9 @@
         </figure>
       </div>
       <div class="left">
-        <figure v-for="(item, index) in images" :key="index"
+        <figure v-for="(item, index) in images" :key="item.id"
                 :class="{active: index === active}" @click="toggle_active(index)">
-          <img :src="item.url" :alt="item.name" @click="toggle_img(index)">
+          <img :src="item.mUrl" :alt="item.id">
         </figure>
       </div>
     </div>
@@ -44,7 +39,6 @@
 </template>
 <script>
 import Sortable from 'sortablejs'
-import axios from 'axios'
 export default {
   name: 'ImgUpload',
   components: {},
@@ -77,60 +71,57 @@ export default {
           return false
         }
       })
-      // Promise.all(arr.filter(item => item).map(file => this.request(file)))
-      //   .then(data => {
-      //     this.images.push(data)
-      //     this.$message.success(`${data.name}上传成功`)
-      //   })
-      //   .catch(err => {
-      //     this.$message.error(err.message)
-      //   })
-      arr.filter(item => item).map(each => {
-        const reader = new FileReader()
-        reader.readAsDataURL(each)
-        reader.onload = () => {
-          this.images.push({url: reader.result, name: each.name})
-          this.$refs.file_input.value = ''
-        }
-        reader.onerror = () => {
-          this.$message.error(`${each.name}上传失败`)
-          this.$refs.file_input.value = ''
-        }
-      })
-    },
-    remove_img(index) {
-      this.images.splice(index, 1)
+      Promise.all(arr.filter(item => item).map(file => this.request(file)))
+        .then(res => {
+          const { code, msg, data } = res
+          if (Number(code) === -1) {
+            this.$message.error(msg)
+          } else {
+            this.images.push(data)
+            this.$message.success(`上传成功`)
+          }
+        })
+        .catch(err => {
+          this.$message.error(err.message)
+        })
+      // arr.filter(item => item).map(each => {
+      //   const reader = new FileReader()
+      //   reader.readAsDataURL(each)
+      //   reader.onload = () => {
+      //     this.images.push({url: reader.result, name: each.name})
+      //     this.$refs.file_input.value = ''
+      //   }
+      //   reader.onerror = () => {
+      //     this.$message.error(`${each.name}上传失败`)
+      //     this.$refs.file_input.value = ''
+      //   }
+      // })
     },
     request(file) {
-      const { url, headers = {}, data = {}, method = 'get' } = this.ajax_conf
-      const obj = { method, url, headers }
-      const newData = Object.assign(data, { file })
-      if (method.toUpperCase().includes('get')) {
-        Object.assign(obj, { params: newData })
-      } else {
-        Object.assign(obj, { data: newData })
+      let { url, headers = {}, data = {} } = this.ajax_conf
+      const formData = new FormData()
+      formData.append('file', file)
+      for(let key in data) {
+        formData.append(key, data[key])
       }
-      return axios(obj)
+      return this.$post_img.post(url, formData, { headers })
     },
     img_view(index) {
       this.glo_mask = true
       this.active = index
-      const {url, name} = this.images[index]
-      this.mask_src = url
-      this.mask_alt = name
-    },
-    toggle_img(index) {
-      console.log('toggle_img:', index)
+      const {oUrl, id} = this.images[index]
+      this.mask_src = oUrl
+      this.mask_alt = id
     },
     close_glo_mask(e) {
       e.stopPropagation()
-      this.glo_mask = false
+      if (e.keyCode === 27) this.glo_mask = false
     },
     toggle_active(index) {
       this.active = index
-      const {url, name} = this.images[index]
-      this.mask_src = url
-      this.mask_alt = name
+      const {oUrl, id} = this.images[index]
+      this.mask_src = oUrl
+      this.mask_alt = id
     }
   },
   created() {},
@@ -192,12 +183,12 @@ div.img-div > figure > img{
 div.img-div > figure > .mask{
   display: none;
   position: absolute;
-  align-items: center;
-  justify-content: center;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
+  align-items: center;
+  justify-content: center;
   background-color: rgba(0, 0, 0, .6);
   overflow: hidden;
 }
@@ -228,9 +219,9 @@ div.img-div > figure > .mask > span:hover{
   flex-shrink: 0;
   width: 17vw;
   height: 100%;
+  background-color: rgba(0, 0, 0, .9);
   overflow-x: hidden;
   overflow-y: auto;
-  background-color: rgba(0, 0, 0, .9);
 }
 .global-mask > .left > figure {
   margin: 15px;
