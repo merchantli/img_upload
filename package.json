@@ -5,10 +5,12 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "lib": "vue-cli-service build --target lib --name tag-img-upload --dest lib packages/upload-images/index.js"
   },
   "dependencies": {
     "@babel/preset-env": "^7.11.5",
+    "axios": "^0.20.0",
     "core-js": "^3.6.5",
     "element-ui": "^2.13.2",
     "sortablejs": "^1.12.0",
