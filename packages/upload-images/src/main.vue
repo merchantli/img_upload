@@ -1,4 +1,5 @@
 <template>
+  <!--模拟面试，图片上传组件封装-->
   <section class="img-wrap" ref="img_wrap">
     <div
         v-for="(item, index) in images" :key="item.id" class="img-div"
@@ -71,31 +72,31 @@ export default {
           return false
         }
       })
-      Promise.all(arr.filter(item => item).map(file => this.request(file)))
-        .then(res => {
-          const { code, msg, data } = res
-          if (Number(code) === -1) {
-            this.$message.error(msg)
-          } else {
-            this.images.push(data)
-            this.$message.success(`上传成功`)
-          }
-        })
-        .catch(err => {
-          this.$message.error(err.message)
-        })
-      // arr.filter(item => item).map(each => {
-      //   const reader = new FileReader()
-      //   reader.readAsDataURL(each)
-      //   reader.onload = () => {
-      //     this.images.push({url: reader.result, name: each.name})
-      //     this.$refs.file_input.value = ''
-      //   }
-      //   reader.onerror = () => {
-      //     this.$message.error(`${each.name}上传失败`)
-      //     this.$refs.file_input.value = ''
-      //   }
-      // })
+      // Promise.all(arr.filter(item => item).map(file => this.request(file)))
+      //   .then(res => {
+      //     const { code, msg, data } = res
+      //     if (Number(code) === -1) {
+      //       this.$message.error(msg)
+      //     } else {
+      //       this.images.push(data)
+      //       this.$message.success(`上传成功`)
+      //     }
+      //   })
+      //   .catch(err => {
+      //     this.$message.error(err.message)
+      //   })
+      arr.filter(item => item).map(each => {
+        const reader = new FileReader()
+        reader.readAsDataURL(each)
+        reader.onload = () => {
+          this.images.push({oUrl: reader.result, mUrl: reader.result,name: each.name})
+          this.$refs.file_input.value = ''
+        }
+        reader.onerror = () => {
+          this.$message.error(`${each.name}上传失败`)
+          this.$refs.file_input.value = ''
+        }
+      })
     },
     request(file) {
       let { url, headers = {}, data = {} } = this.ajax_conf
